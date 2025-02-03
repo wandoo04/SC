@@ -31,3 +31,11 @@ print("Recommended tip:", tipping.output['tip'])
 quality.view()
 service.view() 
 tip.view()
+
+
+
+============================
+
+Enter Quality: 2
+Enter Service: 3
+Recommended tip: ~2 to 5

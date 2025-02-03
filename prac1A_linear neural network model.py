@@ -20,3 +20,13 @@ Yin = []
 for i in range(0,n): 
     Yin.append(inputs[i]*weights[i])
 print(round(sum(Yin),3))
+
+
+#============================= inputs
+1.2
+3.5
+-2.1
+
+3
+2
+1

@@ -1,43 +1,56 @@
-# 6B. Hopfield network.
-# ================================================================
-from neurodynex.hopfield_network import network, pattern_tools, plot_tools
-import matplotlib.pyplot as plt
+import numpy as np
 
-pattern_size = 5
-# create an instance of the class HopfieldNetwork
-hopfield_net = network.HopfieldNetwork(nr_neurons=pattern_size ** 2)
-# instantiate a pattern factory
-factory = pattern_tools.PatternFactory(pattern_size, pattern_size)
+class ART1:
+    def __init__(self, input_size, categories, vigilance=0.8):
+        self.input_size = input_size
+        self.categories = categories
+        self.vigilance = vigilance
+        self.weights = np.ones((categories, input_size))  # Initialize weights with ones
 
-# create a checkerboard pattern and add it to the pattern list
-checkerboard = factory.create_checkerboard()
-pattern_list = [checkerboard]
+    def complement_coding(self, input_pattern):
+        return np.concatenate((input_pattern, 1 - input_pattern))  # Adds complement coding
 
-# add random patterns to the list
-pattern_list.extend(
-    factory.create_random_pattern_list(nr_patterns=3, on_probability=0.5)
-)
-plot_tools.plot_pattern_list(pattern_list)
+    def match_category(self, input_pattern):
+        input_coded = self.complement_coding(input_pattern)
+        for j in range(self.categories):
+            match = np.sum(np.minimum(input_coded, self.weights[j])) / np.sum(input_coded)
+            if match >= self.vigilance:
+                return j  # Category matched
+        return -1  # No match found (new category needed)
 
-# how similar are the random patterns and the checkerboard? Check the overlaps
-overlap_matrix = pattern_tools.compute_overlap_matrix(pattern_list)
-plot_tools.plot_overlap_matrix(overlap_matrix)
+    def train(self, input_pattern):
+        input_coded = self.complement_coding(input_pattern)
+        category = self.match_category(input_pattern)
 
-# let the hopfield network "learn" the patterns. Note: they are not stored
-# explicitly but only network weights are updated !
-hopfield_net.store_patterns(pattern_list)
+        if category == -1:  # No matching category found
+            category = len([w for w in self.weights if np.any(w != 1)])  # Find next available category
+            if category >= self.categories:
+                print("No available category, increase category size!")
+                return
+            self.weights[category] = input_coded  # Assign new pattern
 
-# create a noisy version of a pattern and use that to initialize the network
-noisy_init_state = pattern_tools.flip_n(checkerboard, nr_of_flips=4)
-hopfield_net.set_state_from_pattern(noisy_init_state)
+        else:  # Update weight for the matched category
+            self.weights[category] = np.minimum(self.weights[category], input_coded)
+        
+        print(f"Pattern {input_pattern} stored in category {category}")
 
-# from this initial state, let the network dynamics evolve.
-states = hopfield_net.run_with_monitoring(nr_steps=4)
+    def classify(self, input_pattern):
+        category = self.match_category(input_pattern)
+        return category if category != -1 else "Unknown Pattern"
 
-# each network state is a vector. reshape it to the same shape used to create the patterns.
-states_as_patterns = factory.reshape_patterns(states)
+# Example Usage
+art = ART1(input_size=4, categories=3, vigilance=0.8)
 
-# plot the states of the network
-plot_tools.plot_state_sequence_and_overlap(
-    states_as_patterns, pattern_list, reference_idx=0, suptitle="Network dynamics"
-)
+# Training with binary inputs
+patterns = [
+    np.array([1, 0, 0, 1]),
+    np.array([1, 1, 0, 0]),
+    np.array([0, 0, 1, 1]),
+]
+
+for pattern in patterns:
+    art.train(pattern)
+
+# Classify a new pattern
+test_pattern = np.array([1, 0, 0, 1])
+print("Classified as Category:", art.classify(test_pattern))

@@ -32,3 +32,7 @@ for i in range(0, num_ip):
         ele = 0
         Y.append(ele) 
 print("Y = ",Y)
+
+#===================== input
+1,
+2

@@ -26,3 +26,10 @@ def main():
             print("Weights have been adjusted")
 if  __name__  == " main ": 
     main()
+
+
+=================
+0.5
+-0.2
+0.1
+1
