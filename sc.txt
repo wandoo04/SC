@@ -1,0 +1,1435 @@
+pract 1A .Design a simple linear neural network model.
+
+# Linear Neural Network Model
+
+# Take inputs from the user
+x = float(input("Enter the input X: "))
+b = float(input("Enter the bias b: "))
+w = float(input("Enter the weight W: "))
+
+# Calculate the net input
+net = (w * x + b)
+
+# Display the net input
+print("\n****************OutPut********************")
+print(f"\nnet = {net}")
+
+# Determine the output based on the condition
+if net < 0:
+    out = 0
+elif 0 <= net <= 1:
+    out = net
+else:
+    out = 1
+
+# Display the output
+print(f"output = {out}")
+
+--------------------------------------------------------------------------------------
+
+
+
+
+--------------------------------------------------------------------------------------
+Pract1B: Calculate the output of neural net using both binary and bipolar sigmoidal
+function
+
+#1part take input from user
+
+n = int(input("Enter no. of elements : "))
+
+print("Enter the inputs : ")
+inputs = []
+
+for i in range(0,n):
+    ele = float(input())
+    inputs.append(ele)
+
+print(inputs)
+
+print("Enter the weights")
+weights = []
+
+for i in range(0,n):
+    ele = float(input())
+    weights.append(ele)
+3
+
+print(weights)
+
+print("The net input can be calculated as Yin = x1w1 + x2w2 + x3w3")
+
+Yin =  []
+for i in range(0,n):
+    Yin.append(inputs[i]*weights[i])
+print(round(sum(Yin),3))
+-------------------------------------------------
+
+
+
+
+
+--------------------------------------------------
+Practical 2A : Generate AND/NOT function using McCulloch-Pitts neural net.
+
+import numpy as np
+import pandas as pd
+
+num_ip = int(input("Enter the number of inputs: ")) 
+w1 = 1 
+w2 = 1 
+
+print(f"For the {num_ip} inputs, calculate the net inputs.") 
+
+x1 = [] 
+x2 = []
+
+# Collecting input values
+for j in range(num_ip): 
+    ele1 = int(input("x1 = ")) 
+    ele2 = int(input("x2 = ")) 
+    x1.append(ele1) 
+    x2.append(ele2) 
+
+print("x1 =", x1) 
+print("x2 =", x2) 
+
+# Calculate the net inputs (n and m)
+n = [x * w1 for x in x1]  # Element-wise multiplication of x1 with w1
+m = [x * w2 for x in x2]  # Element-wise multiplication of x2 with w2
+
+Yin = [] 
+# Calculate the net input values (Yin = n + m)
+for i in range(num_ip): 
+    Yin.append(n[i] + m[i]) 
+print("Yin =", Yin)
+
+Yin = [] 
+# Calculate the net input values (Yin = n - m)
+for i in range(num_ip): 
+    Yin.append(n[i] - m[i]) 
+print("After assuming one weight as excitatory & the other as inhibitory:")
+print("Yin (n - m) =", Yin)
+
+# Determine the output based on the condition Yin >= 1
+Y = [] 
+for i in range(num_ip): 
+    if Yin[i] >= 1: 
+        Y.append(1)
+    else:
+        Y.append(0)
+
+print("Y =", Y)
+----------------------------------------------------------------
+
+
+
+
+
+---------------------------------------------------------------
+Pract 2B. Generate XOR function using McCulloch-Pitts neural net.
+
+import math
+import numpy
+import random
+
+# note that this only works for a single layer of depth
+INPUT_NODES = 2
+OUTPUT_NODES = 1
+HIDDEN_NODES = 2
+
+# 15000 iterations is a good point for playing with learning rate
+MAX_ITERATIONS = 130000
+
+# setting this too low makes everything change very slowly, but too high
+# makes it jump at each and every example and oscillate. I found .5 to be good
+LEARNING_RATE = .2
+
+print
+"Neural Network Program"
+
+
+class network:
+    def __init__(self, input_nodes, hidden_nodes, output_nodes, learning_rate):
+        self.input_nodes = input_nodes
+        self.hidden_nodes = hidden_nodes
+        self.output_nodes = output_nodes
+        self.total_nodes = input_nodes + hidden_nodes + output_nodes
+        self.learning_rate = learning_rate
+
+        # set up the arrays
+        self.values = numpy.zeros(self.total_nodes)
+        self.expectedValues = numpy.zeros(self.total_nodes)
+        self.thresholds = numpy.zeros(self.total_nodes)
+
+        # the weight matrix is always square
+        self.weights = numpy.zeros((self.total_nodes, self.total_nodes))
+
+        # set random seed! this is so we can experiment consistently
+        random.seed(10000)
+
+        # set initial random values for weights and thresholds
+        # this is a strictly upper triangular matrix as there is no feedback
+        # loop and there inputs do not affect other inputs
+        for i in range(self.input_nodes, self.total_nodes):
+            self.thresholds[i] = random.random() / random.random()
+            for j in range(i + 1, self.total_nodes):
+                self.weights[i][j] = random.random() * 2
+
+    def process(self):
+        # update the hidden nodes
+        for i in range(self.input_nodes, self.input_nodes + self.hidden_nodes):
+            # sum weighted input nodes for each hidden node, compare threshold, apply sigmoid
+            W_i = 0.0
+            for j in range(self.input_nodes):
+                W_i += self.weights[j][i] * self.values[j]
+            W_i -= self.thresholds[i]
+            self.values[i] = 1 / (1 + math.exp(-W_i))
+
+        # update the output nodes
+        for i in range(self.input_nodes + self.hidden_nodes, self.total_nodes):
+            # sum weighted hidden nodes for each output node, compare threshold, apply sigmoid
+            W_i = 0.0
+            for j in range(self.input_nodes, self.input_nodes + self.hidden_nodes):
+                W_i += self.weights[j][i] * self.values[j]
+            W_i -= self.thresholds[i]
+            self.values[i] = 1 / (1 + math.exp(-W_i))
+
+    def processErrors(self):
+        sumOfSquaredErrors = 0.0
+
+        # we only look at the output nodes for error calculation
+        for i in range(self.input_nodes + self.hidden_nodes, self.total_nodes):
+            error = self.expectedValues[i] - self.values[i]
+            # print error
+            sumOfSquaredErrors += math.pow(error, 2)
+            outputErrorGradient = self.values[i] * (1 - self.values[i]) * error
+            # print outputErrorGradient
+
+            # now update the weights and thresholds
+            for j in range(self.input_nodes, self.input_nodes + self.hidden_nodes):
+                # first update for the hidden nodes to output nodes (1 layer)
+                delta = self.learning_rate * self.values[j] * outputErrorGradient
+                # print delta
+                self.weights[j][i] += delta
+                hiddenErrorGradient = self.values[j] * (1 - self.values[j]) * outputErrorGradient * self.weights[j][i]
+
+                # and then update for the input nodes to hidden nodes
+                for k in range(self.input_nodes):
+                    delta = self.learning_rate * self.values[k] * hiddenErrorGradient
+                    self.weights[k][j] += delta
+
+                # update the thresholds for the hidden nodes
+                delta = self.learning_rate * -1 * hiddenErrorGradient
+                # print delta
+                self.thresholds[j] += delta
+
+            # update the thresholds for the output node(s)
+            delta = self.learning_rate * -1 * outputErrorGradient
+            self.thresholds[i] += delta
+        return sumOfSquaredErrors
+
+
+class sampleMaker:
+    def __init__(self, network):
+        self.counter = 0
+        self.network = network
+
+    def setXor(self, x):
+        if x == 0:
+            self.network.values[0] = 1
+            self.network.values[1] = 1
+            self.network.expectedValues[4] = 0
+        elif x == 1:
+            self.network.values[0] = 0
+            self.network.values[1] = 1
+            self.network.expectedValues[4] = 1
+        elif x == 2:
+            self.network.values[0] = 1
+            self.network.values[1] = 0
+            self.network.expectedValues[4] = 1
+        else:
+            self.network.values[0] = 0
+            self.network.values[1] = 0
+            self.network.expectedValues[4] = 0
+
+    def setNextTrainingData(self):
+        self.setXor(self.counter % 4)
+        self.counter += 1
+
+
+# start of main program loop, initialize classes
+net = network(INPUT_NODES, HIDDEN_NODES, OUTPUT_NODES, LEARNING_RATE)
+samples = sampleMaker(net)
+
+
+for i in range(MAX_ITERATIONS):
+    samples.setNextTrainingData()
+    net.process()
+    error = net.processErrors()
+
+
+    # prove that we got the right answers(ish)!
+    if i > (MAX_ITERATIONS - 5):
+        output = (net.values[0], net.values[1], net.values[4], net.expectedValues[4], error)
+        print(output)
+
+
+# display final parameters
+print(net.weights)
+print(net.thresholds)
+
+
+------------------------------------------------------------
+
+
+
+
+-----------------------------------------------------------
+Pract 3A:Write a program to implement Hebb’s rule.
+
+# Hebb's rule implementation in Python
+
+# Initialization
+print("Consider a single neuron perceptron with a single input")
+
+# Initial weight input
+w = float(input("Enter initial weight w: "))
+
+# Learning coefficient (alpha)
+alpha = float(input("Enter the learning coefficient (alpha): "))
+
+# Input for the number of iterations
+iterations = 10
+
+# Input (assuming binary inputs for simplicity)
+x = float(input("Enter the input value (x) [0 or 1]: "))
+
+# Training loop (Hebb's rule)
+for i in range(iterations):
+    # Calculate net input (net = x + w)
+    net = x + w
+
+    # Activation function (0 if negative, 1 if non-negative)
+    if net < 0:
+        a = 0
+    else:
+        a = 1
+
+    # Update the weight based on Hebb's rule
+    delta_w = alpha * a * x  # Delta weight
+    w = w + delta_w  # Update the weight
+
+    # Output the results of each iteration
+    print(f"Iteration {i + 1}:")
+    print(f"Input x = {x}, Activation = {a}, Change in weight = {delta_w}, New weight = {w}")
+
+
+--------------------------------------------------------------------------------
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Pract3B : Write a program to implement of delta rule.
+
+
+# Delta rule implementation in Python
+
+# Initialize the input, weight vector, and desired output
+input_values = [0.0, 0.0, 0.0]  # Example input vector, size 3
+weights = [0.0, 0.0, 0.0]  # Initialize weight vector
+learning_rate = 0.1  # Learning rate (could be adjusted)
+desired_output = 0  # Desired output for the training
+
+
+# Function to calculate the output
+def calculate_output(inputs, weights):
+    return sum(i * w for i, w in zip(inputs, weights))
+
+
+# Function to update the weights based on the delta rule
+def update_weights(inputs, weights, desired_output, learning_rate):
+    output = calculate_output(inputs, weights)
+    error = desired_output - output
+
+    # Update weights based on error (delta rule)
+    for i in range(len(weights)):
+        weights[i] += learning_rate * error * inputs[i]
+
+    return weights, error
+
+
+# Main loop for training
+iterations = 0
+error = 1  # Initial error greater than 0
+
+# Input values initialization
+for i in range(3):
+    input_values[i] = float(input(f"Enter the input value for x{i + 1}: "))
+
+desired_output = float(input("\nEnter the desired output: "))
+
+# Training loop
+while error != 0 and iterations < 100:  # Maximum of 100 iterations
+    weights, error = update_weights(input_values, weights, desired_output, learning_rate)
+    iterations += 1
+
+    print(f"Iteration {iterations} | Updated Weights: {weights} | Error: {error}")
+
+# Output result
+if error == 0:
+    print("Output is correct!")
+else:
+    print("Training completed with error after maximum iterations.")
+
+
+-----------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------
+Pract4A. Write a program for Back Propagation Algorithm
+    
+import math
+
+def main():
+    # Initial setup
+    coeff = 0.1
+    s = [{'val': 0, 'out': 0, 'wo': 0, 'wi': 0, 'top': 0} for _ in range(3)]
+
+    # Taking input values
+    for i in range(3):
+        s[i]['val'] = float(input("Enter the input value to target output: "))
+        s[i]['top'] = int(input("Enter the target value: "))
+
+    i = 0
+    while i != 3:
+        if i == 0:
+            s[i]['wo'] = -1.0
+            s[i]['wi'] = -0.3
+        else:
+            s[i]['wo'] = s[i-1]['wo']
+            s[i]['wi'] = s[i-1]['wi']
+
+        s[i]['aop'] = s[i]['wo'] + (s[i]['wi'] * s[i]['val'])
+        s[i]['out'] = s[i]['aop']
+        delta = (s[i]['top'] - s[i]['out']) * s[i]['out'] * (1 - s[i]['out'])
+        corr = coeff * delta * s[i]['out']
+        s[i]['wo'] += corr
+        s[i]['wi'] += corr
+        i += 1
+
+    print("VALUE\tTarget\tActual\two\twi")
+    for i in range(3):
+        print(f"{s[i]['val']}\t{s[i]['top']}\t{s[i]['out']}\t{s[i]['wo']}\t{s[i]['wi']}")
+
+if __name__ == "__main__":
+    main()
+
+--------------------------------------------------------------------------------
+
+
+
+
+
+--------------------------------------------------------------------------------
+Pract4B.Write a program for error Backpropagation algorithm.
+
+import math
+
+
+def main():
+    c = float(input("Enter the learning coefficient of network c: "))
+    w10, b10 = map(float, input("Enter the input weights/base of first network: ").split())
+    w20, b20 = map(float, input("Enter the input weights/base of second network: ").split())
+
+    p = float(input("Enter the input value p: "))
+    t = float(input("Enter the target value t: "))
+
+    # Step 1: Propagation of signal through network
+    n1 = w10 * p + b10
+    a1 = math.tanh(n1)
+    n2 = w20 * a1 + b20
+    a2 = math.tanh(n2)
+    e = t - a2
+
+    # Back Propagation of Sensitivities
+    s2 = -2 * (1 - a2 ** 2) * e
+    s1 = (1 - a1 ** 2) * w20 * s2
+
+    # Updation of weights and bases
+    w21 = w20 - (c * s2 * a1)
+    w11 = w10 - (c * s1 * -1)
+    b21 = b20 - (c * s2)
+    b11 = b10 - (c * s1)
+
+    print("The updated weight of first network w11 =", w11)
+    print("The updated weight of second network w21 =", w21)
+    print("The updated base of first network b11 =", b11)
+    print("The updated base of second network b21 =", b21)
+
+
+if __name__ == "__main__":
+    main()
+----------------------------------------------------------------------------------------
+Output:-
+
+error Backpropagation algorithm.py 
+Enter the learning coefficient of network c: 0.1
+Enter the input weights/base of first network: 0.5 0.1
+Enter the input weights/base of second network: -0.3 0.2
+Enter the input value p: 0.8
+Enter the target value t: 0.6
+The updated weight of first network w10 = 0.4797402806622753
+The updated weight of second network w20 = -0.25039740344045325
+The updated base of first network b10 = 0.07467535082784417
+The updated base of second network b20 = 0.30733770815533235
+
+
+
+----------------------------------------------------------------------------------------
+Pract5A.Write a program for Hopfield Network.
+
+class Neuron:
+    def __init__(self, weights):
+        self.weightv = weights
+
+    def act(self, m, x):
+        a = 0
+        for i in range(m):
+            a += x[i] * self.weightv[i]
+        return a
+
+
+class Network:
+    def __init__(self, a, b, c, d):
+        self.nrn = [Neuron(a), Neuron(b), Neuron(c), Neuron(d)]
+        self.output = [0] * 4
+
+    def threshld(self, k):
+        return 1 if k >= 0 else 0
+
+    def activation(self, patrn):
+        for i in range(4):
+            for j in range(4):
+                print(f"\n nrn[{i}].weightv[{j}] is {self.nrn[i].weightv[j]}")
+            self.nrn[i].activation = self.nrn[i].act(4, patrn)
+            print(f"\nactivation is {self.nrn[i].activation}")
+            self.output[i] = self.threshld(self.nrn[i].activation)
+            print(f"\noutput value is {self.output[i]}\n")
+
+
+def main():
+    patrn1 = [1, 0, 1, 0]
+    wt1 = [0, -3, 3, -3]
+    wt2 = [-3, 0, -3, 3]
+    wt3 = [3, -3, 0, -3]
+    wt4 = [-3, 3, -3, 0]
+
+    print("\nTHIS PROGRAM IS FOR A HOPFIELD NETWORK WITH A SINGLE LAYER OF")
+    print("4 FULLY INTERCONNECTED NEURONS. THE NETWORK SHOULD RECALL THE")
+    print("PATTERNS 1010 AND 0101 CORRECTLY.\n")
+
+    # Create the network by calling its constructor.
+    h1 = Network(wt1, wt2, wt3, wt4)
+
+    # Present a pattern to the network and get the activations of the neurons
+    h1.activation(patrn1)
+
+    # Check if the pattern given is correctly recalled and give message
+    for i in range(4):
+        if h1.output[i] == patrn1[i]:
+            print(f"\n pattern= {patrn1[i]}  output = {h1.output[i]}  component matches")
+        else:
+            print(f"\n pattern= {patrn1[i]}  output = {h1.output[i]}  discrepancy occurred")
+
+    print("\n\n")
+    patrn2 = [0, 1, 0, 1]
+    h1.activation(patrn2)
+    for i in range(4):
+        if h1.output[i] == patrn2[i]:
+            print(f"\n pattern= {patrn2[i]}  output = {h1.output[i]}  component matches")
+        else:
+            print(f"\n pattern= {patrn2[i]}  output = {h1.output[i]}  discrepancy occurred")
+
+
+if __name__ == "__main__":
+    main()
+
+import math
+
+
+class Neuron:
+    def __init__(self, weights=None):
+        if weights is None:
+            weights = [0] * 4
+        self.weightv = weights
+        self.activation = 0
+
+    def act(self, m, x):
+        a = 0
+        for i in range(m):
+            a += x[i] * self.weightv[i]
+        return a
+
+
+class Network:
+    def __init__(self, a, b, c, d):
+        self.nrn = [Neuron(a), Neuron(b), Neuron(c), Neuron(d)]
+        self.output = [0] * 4
+
+    def threshld(self, k):
+        return 1 if k >= 0 else 0
+
+    def activation(self, patrn):
+        for i in range(4):
+            for j in range(4):
+                print(f"\n nrn[{i}].weightv[{j}] is {self.nrn[i].weightv[j]}")
+            self.nrn[i].activation = self.nrn[i].act(4, patrn)
+            print(f"\nactivation is {self.nrn[i].activation}")
+            self.output[i] = self.threshld(self.nrn[i].activation)
+            print(f"\noutput value is {self.output[i]}\n")
+
+
+def main():
+    patrn1 = [1, 0, 1, 0]
+    wt1 = [0, -3, 3, -3]
+    wt2 = [-3, 0, -3, 3]
+    wt3 = [3, -3, 0, -3]
+    wt4 = [-3, 3, -3, 0]
+
+    print("\nTHIS PROGRAM IS FOR A HOPFIELD NETWORK WITH A SINGLE LAYER OF")
+    print("4 FULLY INTERCONNECTED NEURONS. THE NETWORK SHOULD RECALL THE")
+    print("PATTERNS 1010 AND 0101 CORRECTLY.\n")
+
+    # Create the network by calling its constructor.
+    h1 = Network(wt1, wt2, wt3, wt4)
+
+    # Present a pattern to the network and get the activations of the neurons
+    h1.activation(patrn1)
+
+    # Check if the pattern given is correctly recalled and give message
+    for i in range(4):
+        if h1.output[i] == patrn1[i]:
+            print(f"\n pattern= {patrn1[i]}  output = {h1.output[i]}  component matches")
+        else:
+            print(f"\n pattern= {patrn1[i]}  output = {h1.output[i]}  discrepancy occurred")
+
+    print("\n\n")
+    patrn2 = [0, 1, 0, 1]
+    h1.activation(patrn2)
+    for i in range(4):
+        if h1.output[i] == patrn2[i]:
+            print(f"\n pattern= {patrn2[i]}  output = {h1.output[i]}  component matches")
+        else:
+            print(f"\n pattern= {patrn2[i]}  output = {h1.output[i]}  discrepancy occurred")
+
+
+if __name__ == "__main__":
+    main()
+------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------------------------
+
+Pract 5B. Write a program for Radial Basis function
+
+import numpy as np
+from scipy.linalg import norm, pinv
+import matplotlib.pyplot as plt
+
+
+class RBF:
+    def __init__(self, indim, numCenters, outdim):
+        self.indim = indim
+        self.outdim = outdim
+        self.numCenters = numCenters
+        self.centers = [np.random.uniform(-1, 1, indim) for i in range(numCenters)]
+        self.beta = 8
+        self.W = np.random.random((self.numCenters, self.outdim))
+
+    def _basisfunc(self, c, d):
+        assert len(d) == self.indim
+        return np.exp(-self.beta * norm(c - d) ** 2)
+
+    def _calcAct(self, X):
+        # calculate activations of RBFs
+        G = np.zeros((X.shape[0], self.numCenters), float)
+        for ci, c in enumerate(self.centers):
+            for xi, x in enumerate(X):
+                G[xi, ci] = self._basisfunc(c, x)
+        return G
+
+    def train(self, X, Y):
+        """ X: matrix of dimensions n x indim
+            Y: column vector of dimension n x 1 """
+
+        # choose random center vectors from training set
+        rnd_idx = np.random.permutation(X.shape[0])[:self.numCenters]
+        self.centers = [X[i, :] for i in rnd_idx]
+
+        print("centers", self.centers)
+        # calculate activations of RBFs
+        G = self._calcAct(X)
+        print(G)
+
+        # calculate output weights (pseudoinverse)
+        self.W = np.dot(pinv(G), Y)
+
+    def test(self, X):
+        """ X: matrix of dimensions n x indim """
+
+        G = self._calcAct(X)
+        Y = np.dot(G, self.W)
+        return Y
+
+
+if __name__ == '__main__':
+    # ----- 1D Example ------------------------------------------------
+    n = 100
+    x = np.mgrid[-1:1:complex(0, n)].reshape(n, 1)
+    # set y and add random noise
+    y = np.sin(3 * (x + 0.5) ** 3 - 1)
+    # y += np.random.normal(0, 0.1, y.shape)
+
+    # rbf regression
+    rbf = RBF(1, 10, 1)
+    rbf.train(x, y)
+    z = rbf.test(x)
+
+    # plot original data
+    plt.figure(figsize=(12, 8))
+    plt.plot(x, y, 'k-')
+
+    # plot learned model
+    plt.plot(x, z, 'r-', linewidth=2)
+
+    # plot rbfs
+    plt.plot([c[0] for c in rbf.centers], np.zeros(rbf.numCenters), 'gs')
+
+    for c in rbf.centers:
+        # RF prediction lines
+        cx = np.arange(c - 0.7, c + 0.7, 0.01)
+        cy = [rbf._basisfunc(np.array([cx_]), np.array([c])) for cx_ in cx]
+        plt.plot(cx, cy, '-', color='gray', linewidth=0.2)
+
+    plt.xlim(-1.2, 1.2)
+    plt.show()
+
+
+--------------------------------------------------------------------------------------
+
+
+
+
+-------------------------------------------------------------------------------------
+Pract 6A .Kohonen Self organizing map
+
+import numpy as np
+import matplotlib.pyplot as pl
+from minisom import MiniSom
+
+# Define the color data (RGB values)
+colors = np.array(
+    [[0., 0., 0.],
+     [0., 0., 1.],
+     [0., 0., 0.5],
+     [0.125, 0.529, 1.0],
+     [0.33, 0.4, 0.67],
+     [0.6, 0.5, 1.0],
+     [0., 1., 0.],
+     [1., 0., 0.],
+     [0., 1., 1.],
+     [1., 0., 1.],
+     [1., 1., 0.],
+     [1., 1., 1.],
+     [.33, .33, .33],
+     [.5, .5, .5],
+     [.66, .66, .66]])
+
+# Define corresponding color names
+color_names = [
+    'black', 'blue', 'darkblue', 'skyblue',
+    'greyblue', 'lilac', 'green', 'red',
+    'cyan', 'violet', 'yellow', 'white',
+    'darkgrey', 'mediumgrey', 'lightgrey'
+]
+
+# Initialize and train the SOM (Self-Organizing Map)
+som = MiniSom(20, 30, 3, sigma=1.0, learning_rate=0.5)  # Grid size (20, 30) and 3 input features (RGB)
+som.train(colors, 100)  # Train the SOM for 100 iterations
+
+# Plot the distance map of the SOM
+pl.imshow(som.distance_map().T, cmap='bone', origin='lower')
+
+# Map each color to its corresponding position on the SOM
+for i, color in enumerate(colors):
+    x, y = som.winner(color)  # Find the best matching unit for the color
+    pl.text(y, x, color_names[i], ha='center', va='center', bbox=dict(facecolor='white', alpha=0.5, lw=0))
+
+# Display the plot with the color names
+pl.title('Color SOM')
+pl.show()
+
+------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------
+Pract6B. Adaptive resonance theory
+
+import numpy as np
+
+
+class ART1:
+    def __init__(self, rho=0.5, n_clusters=2, step=2):
+        """
+        Adaptive Resonance Theory (ART1) Network for binary data clustering.
+
+        Parameters:
+        ----------
+        rho : float
+            Control reset action in training process. Value must be
+            between 0 and 1, defaults to 0.5.
+
+        n_clusters : int
+            Number of clusters, defaults to 2. Min value is also 2.
+
+        step : float
+            Scaling factor for updating weights, defaults to 2.
+        """
+        if not (0 < rho < 1):
+            raise ValueError("rho should be between 0 and 1.")
+        if n_clusters < 2:
+            raise ValueError("n_clusters should be at least 2.")
+
+        self.rho = rho
+        self.n_clusters = n_clusters
+        self.step = step
+        self.weights_21 = None
+        self.weights_12 = None
+
+    def train(self, X):
+        """
+        Trains the ART1 network on the provided binary data.
+
+        Parameters:
+        ----------
+        X : ndarray
+            A 2D numpy array of binary data (shape: [n_samples, n_features]).
+
+        Returns:
+        -------
+        classes : ndarray
+            An array containing the cluster assignment for each input sample.
+        """
+        # Ensure binary data (0s and 1s only)
+        if np.any((X != 0) & (X != 1)):
+            raise ValueError("ART1 Network works only with binary matrices")
+
+        n_samples, n_features = X.shape
+        n_clusters = self.n_clusters
+        rho = self.rho
+        step = self.step
+
+        # Initialize weights if not already initialized
+        if self.weights_21 is None:
+            self.weights_21 = np.ones((n_features, n_clusters))
+        if self.weights_12 is None:
+            self.weights_12 = (step / (step + n_clusters - 1)) * self.weights_21.T
+
+        weight_21 = self.weights_21
+        weight_12 = self.weights_12
+
+        classes = np.zeros(n_samples)
+
+        # Training loop
+        for i, p in enumerate(X):
+            disabled_neurons = []
+            reseted_values = []
+            reset = True
+
+            while reset:
+                output1 = p
+                input2 = np.dot(weight_12, output1.T)
+
+                # Deactivate disabled neurons
+                output2 = np.zeros(input2.size)
+                input2[disabled_neurons] = -np.inf
+                winner_index = input2.argmax()
+                output2[winner_index] = 1
+
+                # Check for the "resonance" condition
+                expectation = np.dot(weight_21, output2)
+                output1 = np.logical_and(p, expectation).astype(int)
+
+                # Calculate reset value
+                reset_value = np.dot(output1.T, output1) / np.dot(p.T, p)
+                reset = reset_value < rho
+
+                # If reset is needed, deactivate the winning neuron and record it
+                if reset:
+                    disabled_neurons.append(winner_index)
+                    reseted_values.append((reset_value, winner_index))
+
+                # If we've disabled all clusters, exit the loop
+                if len(disabled_neurons) >= n_clusters:
+                    reset = False
+                    winner_index = None
+
+                # Finalize the winner neuron
+                if not reset:
+                    if winner_index is not None:
+                        # Update weights
+                        weight_12[winner_index, :] = (step * output1) / (step + np.dot(output1.T, output1) - 1)
+                        weight_21[:, winner_index] = output1
+                    else:
+                        # Select the best rho value if no winner found
+                        winner_index = max(reseted_values, key=lambda x: x[0])[1]
+
+                    classes[i] = winner_index
+
+        return classes
+
+    def predict(self, X):
+        """
+        Predict the clusters for new data.
+
+        Parameters:
+        ----------
+        X : ndarray
+            A 2D numpy array of binary data (shape: [n_samples, n_features]).
+
+        Returns:
+        -------
+        classes : ndarray
+            An array containing the predicted cluster for each input sample.
+        """
+        return self.train(X)
+
+
+# Example usage:
+if __name__ == "__main__":
+    data = np.array([
+        [0, 1, 0],
+        [1, 0, 0],
+        [1, 1, 0],
+    ])
+
+    art1_net = ART1(rho=0.7, n_clusters=2, step=2)
+    clusters = art1_net.predict(data)
+    print("Cluster assignments:", clusters)
+
+
+
+
+----------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------
+
+Pract7A Write a program for Linear separation.
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def create_distance_function(a, b, c):
+    """ 0 = ax + by + c """
+
+    def distance(x, y):
+        """ returns tuple (d, pos)
+            d is the distance
+            If pos == -1 point is below the line,
+            0 on the line and +1 if above the line
+        """
+        nom = a * x + b * y + c
+        if nom == 0:
+            pos = 0
+        elif (nom < 0 and b < 0) or (nom > 0 and b > 0):
+            pos = -1
+        else:
+            pos = 1
+        return (np.absolute(nom) / np.sqrt(a ** 2 + b ** 2), pos)
+
+    return distance
+
+
+points = [(3.5, 1.8), (1.1, 3.9)]
+fig, ax = plt.subplots()
+ax.set_xlabel("sweetness")
+ax.set_ylabel("sourness")
+ax.set_xlim([-1, 6])
+ax.set_ylim([-1, 8])
+X = np.arange(-0.5, 5, 0.1)
+colors = ["r", ""]  # for the samples
+size = 10
+for (index, (x, y)) in enumerate(points):
+    if index == 0:
+        ax.plot(x, y, "o",
+                color="darkorange",
+                markersize=size)
+    else:
+        ax.plot(x, y, "oy",
+                markersize=size)
+step = 0.05
+for x in np.arange(0, 1 + step, step):
+    slope = np.tan(np.arccos(x))
+    dist4line1 = create_distance_function(slope, -1, 0)
+    # print("x: ", x, "slope: ", slope)
+    Y = slope * X
+
+    results = []
+    for point in points:
+        # Call the distance function to calculate distance and position
+        distance, pos = dist4line1(*point)
+        results.append((distance, pos))  # Append results to the list
+
+    # Plot the line based on the position of the points relative to the line
+    if results[0][1] != results[1][1]:  # Points are on different sides
+        ax.plot(X, Y, "g-")  # Green line for separating points
+    else:
+        ax.plot(X, Y, "r-")  # Red line for points on the same side
+
+plt.show()
+
+
+
+--------------------------------------------------------------------------------
+
+
+
+
+--------------------------------------------------------------------------------
+
+Pract 7B. Write a program for Hopfield network model for associative memory
+7b - no need to replace the library code, just need to replace the np.int with int in pattern file.
+
+
+import numpy as np
+from neurodynex.hopfield_network import network, pattern_tools, plot_tools
+
+pattern_size = 5
+
+# create an instance of the class HopfieldNetwork
+hopfield_net = network.HopfieldNetwork(nr_neurons=pattern_size**2)
+
+# instantiate a pattern factory
+factory = pattern_tools.PatternFactory(pattern_size, pattern_size)
+
+# create a checkerboard pattern and add it to the pattern list
+checkerboard = factory.create_checkerboard()
+pattern_list = [checkerboard]
+
+# add random patterns to the list
+pattern_list.extend(factory.create_random_pattern_list(nr_patterns=3, on_probability=0.5))
+
+# plot the pattern list
+plot_tools.plot_pattern_list(pattern_list)
+
+# check the overlaps between the random patterns and the checkerboard
+overlap_matrix = pattern_tools.compute_overlap_matrix(pattern_list)
+plot_tools.plot_overlap_matrix(overlap_matrix)
+
+# let the hopfield network "learn" the patterns. Note: they are not stored explicitly but only network weights are updated!
+hopfield_net.store_patterns(pattern_list)
+
+# create a noisy version of a pattern and use that to initialize the network
+noisy_init_state = pattern_tools.flip_n(checkerboard, nr_of_flips=4)
+hopfield_net.set_state_from_pattern(noisy_init_state)
+
+# from this initial state, let the network dynamics evolve.
+states = hopfield_net.run_with_monitoring(nr_steps=4)
+
+# reshape the states as patterns
+states_as_patterns = factory.reshape_patterns(states)
+
+# plot the states of the network
+plot_tools.plot_state_sequence_and_overlap(states_as_patterns, pattern_list, reference_idx=0, suptitle="Network dynamics")
+
+-------------------------------------------------------------------------------------------------------
+
+
+
+
+--------------------------------------------------------------------------------------------------------
+
+Pract 8A: Membership and Identity Operators | in, not in,
+
+# Python program to illustrate
+# Finding common member in list
+# without using 'in' operator
+
+# Define a function() that takes two lists
+def overlapping(list1,list2):
+	c=0
+	d=0
+	for i in list1:
+		c+=1
+	for i in list2:
+		d+=1
+	for i in range(0,c):
+		for j in range(0,d):
+			if(list1[i]==list2[j]):
+				return 1
+	return 0
+list1=[1,2,3,4,5]
+list2=[6,7,8,9]
+if(overlapping(list1,list2)):
+	print("overlapping")
+else:
+	print("not overlapping")
+
+
+# Python program to illustrate
+# Finding common member in list
+# without using 'in' operator
+
+# Define a function() that takes two lists
+def overlapping(list1,list2):
+
+	c=0
+	d=0
+	for i in list1:
+		c+=1
+	for i in list2:
+		d+=1
+	for i in range(0,c):
+		for j in range(0,d):
+			if(list1[i]==list2[j]):
+				return 1
+	return 0
+list1=[1,2,3,4,5]
+list2=[6,7,8,9]
+if(overlapping(list1,list2)):
+	print("overlapping")
+else:
+	print("not overlapping")
+
+
+--------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------
+8B: Membership and Identity Operators is, is not
+
+# Python program to illustrate the use
+# of 'is' identity operator
+x = 5
+if (type(x) is int):
+	print ("true")
+else:
+	print ("false")
+
+
+
+# Python program to illustrate the
+# use of 'is not' identity operator
+x = 5.2
+if (type(x) is not int):
+	print ("true")
+else:
+	print ("false")
+
+-----------------------------------------------------------------------
+
+
+
+
+
+
+
+-------------------------------------------------------------------------
+Pract 9A:Find ratios using fuzzy logic
+
+
+
+from fuzzywuzzy import fuzz 
+from fuzzywuzzy import process 
+
+s1 = "I love fuzzysforfuzzys"
+s2 = "I am loving fuzzysforfuzzys"
+print ("FuzzyWuzzy Ratio:", fuzz.ratio(s1, s2)) 
+print ("FuzzyWuzzy PartialRatio: ", fuzz.partial_ratio(s1, s2)) 
+print ("FuzzyWuzzy TokenSortRatio: ", fuzz.token_sort_ratio(s1, s2)) 
+print ("FuzzyWuzzy TokenSetRatio: ", fuzz.token_set_ratio(s1, s2)) 
+print ("FuzzyWuzzy WRatio: ", fuzz.WRatio(s1, s2),'\n\n')
+
+# for process library, 
+query = 'fuzzys for fuzzys'
+choices = ['fuzzy for fuzzy', 'fuzzy fuzzy', 'g. for fuzzys'] 
+print ("List of ratios: ")
+print (process.extract(query, choices), '\n')
+print ("Best among the above list: ",process.extractOne(query, choices))
+
+
+-----------------------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------------------
+Pract 9B:Solve Tipping problem using fuzzy logic
+
+
+import numpy as np
+import skfuzzy as fuzz #Traceback Error will occur due to skfuzzy package is not recognized
+from skfuzzy import control as ctrl
+
+# Define Antecedents and Consequents
+quality = ctrl.Antecedent(np.arange(0, 11, 1), 'quality')
+service = ctrl.Antecedent(np.arange(0, 11, 1), 'service')
+tip = ctrl.Consequent(np.arange(0, 26, 1), 'tip')
+
+# Auto-membership function population is possible with .automf(3, 5, or 7)
+quality.automf(3)
+service.automf(3)
+
+# Custom membership functions for 'tip' (low, medium, high)
+tip['low'] = fuzz.trimf(tip.universe, [0, 0, 13])
+tip['medium'] = fuzz.trimf(tip.universe, [0, 13, 25])
+tip['high'] = fuzz.trimf(tip.universe, [13, 25, 25])
+
+# Visualize the membership functions
+quality.view()
+service.view()
+tip.view()
+
+# Define fuzzy rules
+rule1 = ctrl.Rule(quality['poor'] | service['poor'], tip['low'])
+rule2 = ctrl.Rule(service['average'], tip['medium'])
+rule3 = ctrl.Rule(service['good'] | quality['good'], tip['high'])
+
+# Create a Control System and Simulation
+tipping_ctrl = ctrl.ControlSystem([rule1, rule2, rule3])
+tipping = ctrl.ControlSystemSimulation(tipping_ctrl)
+
+# Input: quality = 6.5, service = 9.8
+tipping.input['quality'] = 6.5
+tipping.input['service'] = 9.8
+
+# Compute the tip
+tipping.compute()
+
+# Output: Tip suggestion
+print(f"Suggested tip: {tipping.output['tip']}%")
+
+# Visualize the result
+tip.view(sim=tipping)
+
+-------------------------------------------------------------------------
+
+
+
+------------------------------------------------------------------------
+Pract 10A: Implementation of Simple genetic algorithm
+
+import random
+
+# Number of individuals in each generation
+POPULATION_SIZE = 100
+
+# Valid genes
+GENES = '''abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP 
+ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890, .-;:_!"#%&/()=?@${[]}'''
+
+# Target string to be generated
+TARGET = "I love GeeksforGeeks"
+
+
+class Individual(object):
+    ''' Class representing individual in population '''
+
+    def __init__(self, chromosome):
+        self.chromosome = chromosome
+        self.fitness = self.cal_fitness()
+
+    @classmethod
+    def mutated_genes(self):
+        ''' create random genes for mutation '''
+        global GENES
+        gene = random.choice(GENES)
+        return gene
+
+    @classmethod
+    def create_gnome(self):
+        ''' create chromosome or string of genes '''
+        global TARGET
+        gnome_len = len(TARGET)
+        return [self.mutated_genes() for _ in range(gnome_len)]
+
+    def mate(self, par2):
+        ''' Perform mating and produce new offspring '''
+        child_chromosome = []
+        for gp1, gp2 in zip(self.chromosome, par2.chromosome):
+            prob = random.random()
+
+            if prob < 0.45:
+                child_chromosome.append(gp1)
+
+            elif prob < 0.90:
+                child_chromosome.append(gp2)
+
+            else:
+                child_chromosome.append(self.mutated_genes())
+
+        return Individual(child_chromosome)
+
+    def cal_fitness(self):
+        ''' Calculate fitness score '''
+        global TARGET
+        fitness = 0
+        for gs, gt in zip(self.chromosome, TARGET):
+            if gs != gt:
+                fitness += 1
+        return fitness
+
+
+# Driver code
+def main():
+    global POPULATION_SIZE
+
+    # current generation
+    generation = 1
+
+    found = False
+    population = []
+
+    # create initial population
+    for _ in range(POPULATION_SIZE):
+        gnome = Individual.create_gnome()
+        population.append(Individual(gnome))
+
+    while not found:
+
+        # sort the population in increasing order of fitness score
+        population = sorted(population, key=lambda x: x.fitness)
+
+        # if the individual having lowest fitness score (i.e., 0)
+        # we know that we have reached the target and break the loop
+        if population[0].fitness <= 0:
+            found = True
+            break
+
+        # Otherwise, generate new offspring for new generation
+        new_generation = []
+
+        # Perform Elitism: 10% of fittest population goes to the next generation
+        s = int((10 * POPULATION_SIZE) / 100)
+        new_generation.extend(population[:s])
+
+        # From 50% of fittest population, Individuals will mate to produce offspring
+        s = int((90 * POPULATION_SIZE) / 100)
+        for _ in range(s):
+            parent1 = random.choice(population[:50])
+            parent2 = random.choice(population[:50])
+            child = parent1.mate(parent2)
+            new_generation.append(child)
+
+        population = new_generation
+
+        print("Generation: {}\tString: {}\tFitness: {}".format(
+            generation,
+            "".join(population[0].chromosome),
+            population[0].fitness))
+
+        generation += 1
+
+    print("Generation: {}\tString: {}\tFitness: {}".format(
+        generation,
+        "".join(population[0].chromosome),
+        population[0].fitness))
+
+
+if __name__ == '__main__':
+    main()
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------
+Practical 10 B: Create two classes: City and Fitness using Genetic algorithm
+
+class City:
+
+    def __init__(self, x, y):
+        self.x = x
+
+        self.y = y
+
+    def distance(self, city):
+        xDis = abs(self.x - city.x)
+
+        yDis = abs(self.y - city.y)
+
+        distance = np.sqrt((xDis ** 2) + (yDis ** 2))
+
+        return distance
+
+    def __repr__(self):
+        return "(" + str(self.x) + "," + str(self.y) + ")"
+
+
+class Fitness:
+
+    def __init__(self, route):
+
+        self.route = route
+
+        self.distance = 0
+
+        self.fitness = 0.0
+
+    def routeDistance(self):
+
+        if self.distance == 0:
+
+            pathDistance = 0
+
+            for i in range(0, len(self.route)):
+
+                fromCity = self.route[i]
+
+                toCity = None
+
+                if i + 1 < len(self.route):
+
+                    toCity = self.route[i + 1]
+
+                else:
+
+                    toCity = self.route[0]
+
+                pathDistance += fromCity.distance(toCity)
+
+            self.distance = pathDistance
+
+        return self.distance
+
+    def routeFitness(self):
+
+        if self.fitness == 0:
+            self.fitness = 1 / float(self.routeDistance())
+
+        return self.fitness
+
+---------------------------------------------------------------------------------------
