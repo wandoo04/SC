@@ -3,7 +3,7 @@ from scipy.linalg import norm, pinv
 import matplotlib.pyplot as plt
 
 class RBF:
-    def  init (self, indim, numCenters, outdim): 
+    def __init__(self, indim, numCenters, outdim): 
         self.indim = indim
         self.outdim = outdim 
         self.numCenters = numCenters
@@ -47,7 +47,7 @@ class RBF:
         return Y
 
 
-if   __name__  == '  main  ': 
+if   __name__  == '__main__': 
     #	1D Example
     n = 100
  
